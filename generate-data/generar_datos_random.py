@@ -114,7 +114,7 @@ def main():
     cant_lima, pct_lima = solicitar_parametros_sede("Lima (Parquet)")
     cant_ba, pct_ba = solicitar_parametros_sede("Buenos Aires (JSON Lines)")
     
-    inputs_dir = os.path.join("data", "inputs")
+    inputs_dir = os.path.join("../", "data", "inputs")
     os.makedirs(inputs_dir, exist_ok=True)
     
     print("\n🧠 Generando datasets customizados...")
