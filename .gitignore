@@ -1,3 +1,12 @@
 .venv
 data/inputs/*
 !data/inputs/.gitkeep
+
+data/outputs/psa/*
+!data/outputs/psa/.gitkeep
+
+data/outputs/gold/*
+!data/outputs/gold/.gitkeep
+
+data/outputs/errors/*
+!data/outputs/errors/.gitkeep

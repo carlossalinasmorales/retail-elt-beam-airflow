@@ -12,3 +12,8 @@ Prompt: "Has un ejemplo de ingesta de datos utilizando schemas y comparalo con p
 
 ### notebooks/data_transformations.ipynb
 Prompt: "Como puedo visualizar santiago_to_output(df_santiago) en formato tabla de una df de pandas" 
+
+### job_ingest_to_psa.py
+Prompt: "Muestrame como guardar lo que crea un pipeline en beam con este formato: carpeta historica (PSA) añadiendo la fecha de procesamiento
+(proc date=YYYY-MM-DD)."
+
