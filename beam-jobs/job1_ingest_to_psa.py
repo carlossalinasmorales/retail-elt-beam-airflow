@@ -83,7 +83,7 @@ def lima_to_output(row):
 
 #*************Pipeline*************
 
-#Se define el schema para guardar parquet (es un duplicado del que SalesOutput)
+#Se define el schema para guardar parquet
 schema_parquet = pa.schema([
     ("id_transaccion", pa.string()),
     ("ciudad", pa.string()),
@@ -93,13 +93,15 @@ schema_parquet = pa.schema([
     ("ingestado_at", pa.string()),
 ])
 
-#Se crea el outputh path apra guardar en formato historico
+#Se crea el output path apra guardar en formato historico
 proc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 output_path = (
     Path(data_outputs_psa)
     / f"proc_date={proc_date}"
-    / "sales"
+    / "psa-sales"
 )
+
+# Comienza el pipeline con beam
 
 with beam.Pipeline() as p:
     sales_santiago_csv = (

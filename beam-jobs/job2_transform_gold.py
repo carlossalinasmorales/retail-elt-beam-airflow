@@ -90,10 +90,6 @@ class ConvertirGoldUSD(beam.DoFn):
             "fecha_compras": row["fecha_transaccion"],
         }
 
-
-
-
-
 #schema gold parquet
 schema_gold = pa.schema([
     ("id_transaccion", pa.string()),
@@ -102,10 +98,9 @@ schema_gold = pa.schema([
     ("fecha_compras", pa.string()),
 ])
 
-
 proc_date = get_proc_date()
-output_gold_path = (Path(data_outputs_gold)/ f"proc_date={proc_date}"/ "sales")
-output_errors_path = (Path(data_outputs_errors)/ f"proc_date={proc_date}"/ "sales")
+output_gold_path = (Path(data_outputs_gold)/ f"proc_date={proc_date}"/ "gold-sales")
+output_errors_path = (Path(data_outputs_errors)/ f"proc_date={proc_date}"/ "anomalies-sales")
 
 with beam.Pipeline() as p:
 

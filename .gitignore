@@ -1,4 +1,5 @@
 .venv
+.atl
 data/inputs/*
 !data/inputs/.gitkeep
 
