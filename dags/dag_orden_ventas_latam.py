@@ -1,44 +1,26 @@
 from datetime import timedelta, datetime
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
-from airflow.providers.standard.operators.python import PythonOperator
+from airflow.providers.standard.operators.bash import BashOperator
 from airflow.models.dag import DAG
-import shutil
-
-def cleanup_psa_func(proc_date, **kwargs):
-    path = f"/opt/airflow/data/outputs/psa/proc_date={proc_date}"
-    shutil.rmtree(path, ignore_errors=True)
-
-def cleanup_gold_func(proc_date, **kwargs):
-    for base in ["gold", "errors"]:
-        path = f"/opt/airflow/data/outputs/{base}/proc_date={proc_date}"
-        shutil.rmtree(path, ignore_errors=True)
-
-default_args = {
-    "retries": 3,
-    "retry_delay": timedelta(minutes=5),
-}
 
 with DAG(
     dag_id="retail_sales_beam_pipeline",
     description="A simple dag for retail multy country data sources",
     start_date=datetime(2026, 6, 28),
     schedule="@daily",
-    catchup=True,
-    default_args=default_args,
+    catchup=False,
+    default_args={"retries": 3, "retry_delay": timedelta(minutes=0.1)},
     tags=["beam", "retail", "etl"],
 ) as dag:
 
-    # Limpia la partición antes de escribir
-    cleanup_psa = PythonOperator(
+    cleanup_psa = BashOperator(
         task_id="cleanup_psa",
-        python_callable=cleanup_psa_func,
-        op_kwargs={"proc_date": "{{ ds }}"},
+        bash_command="rm -rf /opt/airflow/data/outputs/psa/proc_date={{ ds }}",
     )
 
-    cleanup_gold = PythonOperator(
+    cleanup_gold = BashOperator(
         task_id="cleanup_gold",
-        python_callable=cleanup_gold_func,
-        op_kwargs={"proc_date": "{{ ds }}"},
+        bash_command="rm -rf /opt/airflow/data/outputs/errors/proc_date={{ ds }} /opt/airflow/data/outputs/gold/proc_date={{ ds }}",
     )
 
     ingest_to_psa = BeamRunPythonPipelineOperator(

@@ -52,3 +52,6 @@ Prompt: "Escribe el docker compose para levantar airflow"
 
 ### job_ingest_to_psa.py y job2_transform_gold.py
 Prompt: "Dame la manera mas simple de pasarle argumentos para que el date de airflow funcione con beam con el codigo actual"
+
+### Docker files
+Prompt: "Configura el dockerfile y docker compose basandote en uv para correr airflow"

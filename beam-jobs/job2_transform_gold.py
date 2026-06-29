@@ -22,12 +22,9 @@ data_outputs_errors = "/opt/airflow/data/outputs/errors/"
 data_outputs_gold = "/opt/airflow/data/outputs/gold/"
 
 #Funciones para paths
-def get_proc_date():
-    return 
 
 def read_psa_path(proc_date) -> str:
-    return str(Path(data_outputs_psa)/ f"proc_date={proc_date}"/ "sales*.parquet")
-
+    return str(Path(data_outputs_psa)/ f"proc_date={proc_date}"/ "psa-sales*.parquet")
 
 
 #Funcion para parsear tipo de cambio
