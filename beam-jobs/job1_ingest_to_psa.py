@@ -1,19 +1,29 @@
 import csv
 import json
 from datetime import datetime, timezone
+import argparse
 
 import apache_beam as beam
-from apache_beam.io.parquetio import ReadFromParquet, WriteToParquet
+from apache_beam.io.parquetio import WriteToParquet
 import pyarrow as pa
 from pathlib import Path
 
-#Data dirs
-data_inputs = "../data/inputs/"
+
+#Data dirs test
+# data_inputs_test = "../data/inputs/"
+# data_santiago_test = "ventas_santiago.csv"
+# data_buenos_aires_test = "ventas_buenos_aires.json"
+# data_lima_test = "ventas_lima.parquet"
+# data_outputs_psa_test = "../data/outputs/psa/"
+
+#Data dirs airflow
+data_inputs = "/opt/airflow/data/inputs/"
 data_santiago = "ventas_santiago.csv"
 data_buenos_aires = "ventas_buenos_aires.json"
 data_lima = "ventas_lima.parquet"
+data_outputs_psa = "/opt/airflow/data/outputs/psa/"
 
-data_outputs_psa = "../data/outputs/psa/"
+
 
 # ---------- Funciones globales ----------
 
@@ -79,8 +89,6 @@ def lima_to_output(row):
         "ingestado_at": ingestion_time(),
     }
 
-
-
 #*************Pipeline*************
 
 #Se define el schema para guardar parquet
@@ -94,7 +102,17 @@ schema_parquet = pa.schema([
 ])
 
 #Se crea el output path apra guardar en formato historico
-proc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+#Date para test de script
+# proc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d") 
+
+#Date como argumento para que funcione con airflow
+parser = argparse.ArgumentParser()
+parser.add_argument("--proc_date", required=True)
+args, beam_args = parser.parse_known_args()
+proc_date = args.proc_date
+
+
 output_path = (
     Path(data_outputs_psa)
     / f"proc_date={proc_date}"
@@ -103,7 +121,7 @@ output_path = (
 
 # Comienza el pipeline con beam
 
-with beam.Pipeline() as p:
+with beam.Pipeline(argv=beam_args) as p:
     sales_santiago_csv = (
         p
         | "Leer CSV Santiago" >> beam.io.ReadFromText(data_inputs + data_santiago, skip_header_lines=1)

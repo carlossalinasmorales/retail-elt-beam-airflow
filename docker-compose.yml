@@ -1,17 +1,17 @@
-version: "3.9"
-
 x-airflow-common: &airflow-common
-  image: apache/airflow:3.0.2-python3.12
+  build: .
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__WEBSERVER__SECRET_KEY: "secret-key"
     AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "True"
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
     - ./data:/opt/airflow/data
+    - ./beam-jobs:/opt/airflow/beam-jobs #Se montan los jobs en el contenedor de airflow
 
 services:
   postgres:

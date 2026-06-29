@@ -1,6 +1,7 @@
 import csv
 import json
-from datetime import datetime, timezone
+# from datetime import datetime, timezone
+import argparse
 
 import apache_beam as beam
 from apache_beam.io.parquetio import ReadFromParquet, WriteToParquet
@@ -8,15 +9,21 @@ import pyarrow as pa
 from pathlib import Path
 
 
-#Data dirs
-data_inputs = "../data/inputs/"
-data_outputs_psa = "../data/outputs/psa/"
-data_outputs_errors = "../data/outputs/errors/"
-data_outputs_gold = "../data/outputs/gold/"
+#Data dirs test
+# data_inputs_test = "../data/inputs/"
+# data_outputs_psa_test = "../data/outputs/psa/"
+# data_outputs_errors_test = "../data/outputs/errors/"
+# data_outputs_gold_test = "../data/outputs/gold/"
+
+#Data dirs airflow
+data_inputs = "/opt/airflow/data/inputs/"
+data_outputs_psa = "/opt/airflow/data/outputs/psa/"
+data_outputs_errors = "/opt/airflow/data/outputs/errors/"
+data_outputs_gold = "/opt/airflow/data/outputs/gold/"
 
 #Funciones para paths
 def get_proc_date():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return 
 
 def read_psa_path(proc_date) -> str:
     return str(Path(data_outputs_psa)/ f"proc_date={proc_date}"/ "sales*.parquet")
@@ -98,11 +105,20 @@ schema_gold = pa.schema([
     ("fecha_compras", pa.string()),
 ])
 
-proc_date = get_proc_date()
+#Date para test de script
+# proc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d") 
+
+#Date como argumento para que funcione con airflow
+parser = argparse.ArgumentParser()
+parser.add_argument("--proc_date", required=True)
+args, beam_args = parser.parse_known_args()
+proc_date = args.proc_date
+
+
 output_gold_path = (Path(data_outputs_gold)/ f"proc_date={proc_date}"/ "gold-sales")
 output_errors_path = (Path(data_outputs_errors)/ f"proc_date={proc_date}"/ "anomalies-sales")
 
-with beam.Pipeline() as p:
+with beam.Pipeline(argv=beam_args) as p:
 
     resultado = (
         p

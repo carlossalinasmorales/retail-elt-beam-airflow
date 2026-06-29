@@ -29,7 +29,7 @@ Todo uso de IA utilziado en este trabajo fue **checkeado y editado** detalladame
 
 -----
 ### Responder el modelo de las 4 pregutnas de BEAM rapidamente
-Prompt: "Responde el modelo de las 4 preguntas de BEAM (What, When, Where, How) cone ste contexto"
+Prompt: "Responde el modelo de las 4 preguntas de BEAM (What, When, Where, How) con este contexto"
 
 -----
 
@@ -49,3 +49,6 @@ Prompt: "Muestrame como guardar lo que crea un pipeline en beam con este formato
 ### docker-compose.yml
 Prompt: "Escribe el docker compose para levantar airflow"
 
+
+### job_ingest_to_psa.py y job2_transform_gold.py
+Prompt: "Dame la manera mas simple de pasarle argumentos para que el date de airflow funcione con beam con el codigo actual"

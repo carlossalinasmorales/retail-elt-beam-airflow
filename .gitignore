@@ -10,4 +10,7 @@ data/outputs/gold/*
 !data/outputs/gold/.gitkeep
 
 data/outputs/errors/*
-!data/outputs/errors/.gitkeep
+!data/outputs/errors/.gitkeep\
+
+logs
+*/__pycache__/
