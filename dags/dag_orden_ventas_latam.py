@@ -9,7 +9,7 @@ with DAG(
     start_date=datetime(2026, 6, 28),
     schedule="@daily",
     catchup=False,
-    default_args={"retries": 3, "retry_delay": timedelta(minutes=0.1)},
+    default_args={"retries": 3, "retry_delay": timedelta(minutes=5)},
     tags=["beam", "retail", "etl"],
 ) as dag:
 
