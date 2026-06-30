@@ -1,16 +1,18 @@
 .venv
 .atl
-data/inputs/*
-!data/inputs/.gitkeep
+data/inputs/ventas_buenos_aires.json
+data/inputs/ventas_lima.parquet
+data/inputs/ventas_santiago.csv
 
-data/outputs/psa/*
-!data/outputs/psa/.gitkeep
 
-data/outputs/gold/*
-!data/outputs/gold/.gitkeep
+data/psa/*
+!data/psa/.gitkeep
 
-data/outputs/errors/*
-!data/outputs/errors/.gitkeep\
+data/gold/*
+!data/gold/.gitkeep
+
+data/errors/*
+!data/errors/.gitkeep\
 
 logs
 */__pycache__/
