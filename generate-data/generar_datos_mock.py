@@ -5,7 +5,7 @@ from datetime import datetime
 
 def crear_entorno_datos():
     # 1. Crear la estructura de carpetas de entrada si no existe
-    inputs_dir = os.path.join("../", "data", "inputs")
+    inputs_dir = os.path.join("./", "data", "inputs")
     os.makedirs(inputs_dir, exist_ok=True)
     print(f"📁 Carpetas creadas o verificadas en: {inputs_dir}")
 

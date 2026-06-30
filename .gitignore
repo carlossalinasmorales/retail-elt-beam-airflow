@@ -1,18 +1,7 @@
 .venv
 .atl
-data/inputs/ventas_buenos_aires.json
-data/inputs/ventas_lima.parquet
-data/inputs/ventas_santiago.csv
-
-
-data/psa/*
-!data/psa/.gitkeep
-
-data/gold/*
-!data/gold/.gitkeep
-
-data/errors/*
-!data/errors/.gitkeep\
+!data/.gitkeep
+data/*
 
 logs
 */__pycache__/
