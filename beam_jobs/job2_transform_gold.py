@@ -11,15 +11,15 @@ from pathlib import Path
 
 #Data dirs test
 # data_inputs_test = "../data/inputs/"
-# data_outputs_psa_test = "../data/outputs/psa/"
-# data_outputs_errors_test = "../data/outputs/errors/"
-# data_outputs_gold_test = "../data/outputs/gold/"
+# data_outputs_psa_test = "../data/psa/"
+# data_outputs_errors_test = "../data/errors/"
+# data_outputs_gold_test = "../data/gold/"
 
 #Data dirs airflow
 data_inputs = "/opt/airflow/data/inputs/"
-data_outputs_psa = "/opt/airflow/data/outputs/psa/"
-data_outputs_errors = "/opt/airflow/data/outputs/errors/"
-data_outputs_gold = "/opt/airflow/data/outputs/gold/"
+data_outputs_psa = "/opt/airflow/data/psa/"
+data_outputs_errors = "/opt/airflow/data/errors/"
+data_outputs_gold = "/opt/airflow/data/gold/"
 
 #Funciones para paths
 
@@ -65,27 +65,16 @@ class ParsearYValidarContrato(beam.DoFn):
             "fecha_transaccion": str(row["fecha_transaccion"]),
         }
 
-#Funcion apra cargar tipo de cambio
-def cargar_tipo_cambio():
-    tipo_cambio = {}
-
-    with open(Path(data_inputs) / "tipo_cambio.csv", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
-
-        for row in reader:
-            tipo_cambio[row["codigo_moneda"]] = float(row["factor_usd"])
-
-    return tipo_cambio
+#Parsear tipo de cambio como side input de Beam
+def parse_tipo_cambio(line):
+    row = next(csv.reader([line]))
+    return (row[0], float(row[2]))  # (codigo_moneda, factor_usd)
 
 
-TIPO_CAMBIO = cargar_tipo_cambio()
-
-
-#Convertir a gold
-#Dado la estructura del etl asumimos que moneda origen siempre existe en TIPO_CAMBIO
+#Convertir a gold usando side input
 class ConvertirGoldUSD(beam.DoFn):
-    def process(self, row):
-        factor_usd = TIPO_CAMBIO[row["moneda_origen"]]
+    def process(self, row, tipo_cambio):
+        factor_usd = tipo_cambio[row["moneda_origen"]]
 
         yield {
             "id_transaccion": row["id_transaccion"],
@@ -117,6 +106,15 @@ output_errors_path = (Path(data_outputs_errors)/ f"proc_date={proc_date}"/ "anom
 
 with beam.Pipeline(argv=beam_args) as p:
 
+    # Side input: leer tipo de cambio como PCollection de pares (codigo_moneda, factor_usd)
+    tipo_cambio = (
+        p
+        | "Leer tipo de cambio" >> beam.io.ReadFromText(
+            data_inputs + "tipo_cambio.csv", skip_header_lines=1
+        )
+        | "Parsear tipo de cambio" >> beam.Map(parse_tipo_cambio)
+    )
+
     resultado = (
         p
         | "Leer PSA" >> ReadFromParquet(read_psa_path(proc_date))
@@ -131,9 +129,19 @@ with beam.Pipeline(argv=beam_args) as p:
     validos = resultado.validos
     corruptos = resultado.corruptos
 
-    gold = (
+    # Deduplicar por id_transaccion antes de convertir a USD
+    validos_dedup = (
         validos
-        | "Convertir monto a USD" >> beam.ParDo(ConvertirGoldUSD())
+        | "Key por id_transaccion" >> beam.Map(lambda row: (row["id_transaccion"], row))
+        | "Deduplicar" >> beam.GroupByKey()
+        | "Tomar primer registro" >> beam.Map(lambda kv: next(iter(kv[1])))
+    )
+
+    gold = (
+        validos_dedup
+        | "Convertir monto a USD" >> beam.ParDo(
+            ConvertirGoldUSD(), beam.pvalue.AsDict(tipo_cambio)
+        )
     )
 
     (

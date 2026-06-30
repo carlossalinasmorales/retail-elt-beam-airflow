@@ -12,7 +12,7 @@ x-airflow-common: &airflow-common
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
     - ./data:/opt/airflow/data
-    - ./beam-jobs:/opt/airflow/beam-jobs #Se montan los jobs en el contenedor de airflow
+    - ./beam_jobs:/opt/airflow/beam_jobs #Se montan los jobs en el contenedor de airflow
 
 services:
   postgres:

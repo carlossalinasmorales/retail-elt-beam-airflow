@@ -15,24 +15,24 @@ with DAG(
 
     cleanup_psa = BashOperator(
         task_id="cleanup_psa",
-        bash_command="rm -rf /opt/airflow/data/outputs/psa/proc_date={{ ds }}",
+        bash_command="rm -rf /opt/airflow/data/psa/proc_date={{ ds }}",
     )
 
     cleanup_gold = BashOperator(
         task_id="cleanup_gold",
-        bash_command="rm -rf /opt/airflow/data/outputs/errors/proc_date={{ ds }} /opt/airflow/data/outputs/gold/proc_date={{ ds }}",
+        bash_command="rm -rf /opt/airflow/data/errors/proc_date={{ ds }} /opt/airflow/data/gold/proc_date={{ ds }}",
     )
 
     ingest_to_psa = BeamRunPythonPipelineOperator(
         task_id="ingest_to_psa",
-        py_file="/opt/airflow/beam-jobs/job1_ingest_to_psa.py",
+        py_file="/opt/airflow/beam_jobs/job1_ingest_to_psa.py",
         runner="DirectRunner",
         pipeline_options={"proc_date": "{{ ds }}"},
     )
 
     transform_to_gold = BeamRunPythonPipelineOperator(
         task_id="transform_to_gold",
-        py_file="/opt/airflow/beam-jobs/job2_transform_gold.py",
+        py_file="/opt/airflow/beam_jobs/job2_transform_gold.py",
         runner="DirectRunner",
         pipeline_options={"proc_date": "{{ ds }}"},
     )

@@ -38,12 +38,14 @@ El pipeline está compuesto por dos jobs independientes de Apache Beam orquestad
 retail-elt-beam-airflow/
 ├── dags/
 │   └── dag_orden_ventas_latam.py
-├── beam-jobs/
+├── beam_jobs/
 │   ├── job1_ingest_to_psa.py
 │   └── job2_transform_gold.py
 ├── data/
 │   ├── inputs/
-│   └── outputs/
+│   ├── psa/
+│   ├── gold/
+│   └── errors/
 ├── docker-compose.yml
 ├── Dockerfile
 ├── pyproject.toml
@@ -66,7 +68,7 @@ Comportamiento clave:
 - usa `{{ ds }}` como fecha de procesamiento
 - evita duplicados en una misma fecha limpiando la partición antes de ejecutar
 
-### `beam-jobs/job1_ingest_to_psa.py`
+### `beam_jobs/job1_ingest_to_psa.py`
 
 Job de Apache Beam para la ingesta y creación de la capa PSA.
 
@@ -81,7 +83,7 @@ Responsabilidades:
 Parámetro de ejecución:
 - `--proc_date` (obligatorio): fecha de procesamiento usada para construir la ruta de salida PSA
 
-### `beam-jobs/job2_transform_gold.py`
+### `beam_jobs/job2_transform_gold.py`
 
 Job de Apache Beam para validación y transformación.
 
@@ -111,9 +113,9 @@ Archivos esperados en `data/inputs/`:
 
 En el estado actual de desarrollo local, las salidas se escriben en:
 
-- `data/outputs/psa/proc_date=YYYY-MM-DD/`
-- `data/outputs/gold/proc_date=YYYY-MM-DD/`
-- `data/outputs/errors/proc_date=YYYY-MM-DD/`
+- `data/psa/proc_date=YYYY-MM-DD/`
+- `data/gold/proc_date=YYYY-MM-DD/`
+- `data/errors/proc_date=YYYY-MM-DD/`
 
 ## Cómo ejecutar
 
@@ -154,13 +156,13 @@ También se pueden ejecutar los jobs Beam manualmente con uv.
 ### Job 1
 
 ```bash
-uv run python beam-jobs/job1_ingest_to_psa.py --proc_date 2026-06-29
+uv run python beam_jobs/job1_ingest_to_psa.py --proc_date 2026-06-29
 ```
 
 ### Job 2
 
 ```bash
-uv run python beam-jobs/job2_transform_gold.py --proc_date 2026-06-29
+uv run python beam_jobs/job2_transform_gold.py --proc_date 2026-06-29
 ```
 
 ## Notas sobre Airflow
@@ -175,12 +177,6 @@ uv run python beam-jobs/job2_transform_gold.py --proc_date 2026-06-29
 - **Parquet** se utiliza en PSA y Gold porque es un formato columnar con mejor compresión y menor costo de lectura que formatos de texto fila a fila.
 - La capa **PSA** preserva particiones históricas por fecha de proceso, mejorando auditabilidad y reprocesamiento.
 - El pipeline aísla registros inválidos en la **DLQ** en lugar de botar el proceso completo, reduciendo costo operativo en ejecuciones diarias.
-
-## Limitaciones / brechas actuales
-
-- El cruce con `tipo_cambio.csv` actualmente se carga en memoria con un diccionario Python en lugar de un Side Input distribuido de Beam.
-- La estructura actual usa `beam-jobs/` y `data/outputs/...`; si la entrega exige estructura literal, esto podría requerir renombre.
-- La deduplicación en la capa Gold no está implementada explícitamente.
 
 ## Anexo de uso de IA
 

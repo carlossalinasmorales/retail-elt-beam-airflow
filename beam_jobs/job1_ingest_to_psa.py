@@ -14,14 +14,14 @@ from pathlib import Path
 # data_santiago_test = "ventas_santiago.csv"
 # data_buenos_aires_test = "ventas_buenos_aires.json"
 # data_lima_test = "ventas_lima.parquet"
-# data_outputs_psa_test = "../data/outputs/psa/"
+# data_outputs_psa_test = "../data/psa/"
 
 #Data dirs airflow
 data_inputs = "/opt/airflow/data/inputs/"
 data_santiago = "ventas_santiago.csv"
 data_buenos_aires = "ventas_buenos_aires.json"
 data_lima = "ventas_lima.parquet"
-data_outputs_psa = "/opt/airflow/data/outputs/psa/"
+data_outputs_psa = "/opt/airflow/data/psa/"
 
 
 
