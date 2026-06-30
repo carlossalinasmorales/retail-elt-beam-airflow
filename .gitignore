@@ -1,7 +1,6 @@
 .venv
 .atl
-!data/.gitkeep
-data/*
+
 plugins
 logs
 */__pycache__/
