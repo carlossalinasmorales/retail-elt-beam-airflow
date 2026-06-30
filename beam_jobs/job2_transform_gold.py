@@ -1,40 +1,33 @@
 import csv
 import json
-# from datetime import datetime, timezone
 import argparse
-
 import apache_beam as beam
 from apache_beam.io.parquetio import ReadFromParquet, WriteToParquet
 import pyarrow as pa
 from pathlib import Path
 
-
-#Data dirs test
-# data_inputs_test = "../data/inputs/"
-# data_outputs_psa_test = "../data/psa/"
-# data_outputs_errors_test = "../data/errors/"
-# data_outputs_gold_test = "../data/gold/"
-
-#Data dirs airflow
+# ==========================================
+#-----Data dirs (con bindmount en local)
+# ==========================================
 data_inputs = "/opt/airflow/data/inputs/"
 data_outputs_psa = "/opt/airflow/data/psa/"
 data_outputs_errors = "/opt/airflow/data/errors/"
 data_outputs_gold = "/opt/airflow/data/gold/"
 
-#Funciones para paths
-
-def read_psa_path(proc_date) -> str:
+# ==========================================
+#---------Funciones para paths------------
+# ==========================================
+def read_psa_path(proc_date):
     return str(Path(data_outputs_psa)/ f"proc_date={proc_date}"/ "psa-sales*.parquet")
 
-
-#Funcion para parsear tipo de cambio
+# ==========================================
+#----Funcion para parsear tipo de cambio---
+# ==========================================
 class ParsearYValidarContrato(beam.DoFn):
     def process(self, row):
         errores = []
-
         try:
             monto_original = float(row["monto_original"])
-
             if monto_original <= 0:
                 errores.append("monto menor a cero")
 
@@ -65,13 +58,16 @@ class ParsearYValidarContrato(beam.DoFn):
             "fecha_transaccion": str(row["fecha_transaccion"]),
         }
 
+# ==========================================
 #Parsear tipo de cambio como side input de Beam
+# ==========================================
 def parse_tipo_cambio(line):
     row = next(csv.reader([line]))
-    return (row[0], float(row[2]))  # (codigo_moneda, factor_usd)
+    return (row[0], float(row[2]))
 
-
-#Convertir a gold usando side input
+# ==========================================
+#----Convertir a gold usando side input---
+# ==========================================
 class ConvertirGoldUSD(beam.DoFn):
     def process(self, row, tipo_cambio):
         factor_usd = tipo_cambio[row["moneda_origen"]]
@@ -83,30 +79,35 @@ class ConvertirGoldUSD(beam.DoFn):
             "fecha_compras": row["fecha_transaccion"],
         }
 
-#schema gold parquet
+# ==========================================
+#-----------schema gold parquet---------
+# ==========================================
 schema_gold = pa.schema([
     ("id_transaccion", pa.string()),
     ("ciudad", pa.string()),
     ("monto_usd", pa.float64()),
     ("fecha_compras", pa.string()),
 ])
-
-#Date para test de script
-# proc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d") 
-
-#Date como argumento para que funcione con airflow
+# ===============================================
+# Date como argumento para que funcione con airflow
+# ==============================================
 parser = argparse.ArgumentParser()
 parser.add_argument("--proc_date", required=True)
 args, beam_args = parser.parse_known_args()
 proc_date = args.proc_date
 
-
+# ==========================================
+#Generacion de output path con fecha dinamica
+# ==========================================
 output_gold_path = (Path(data_outputs_gold)/ f"proc_date={proc_date}"/ "gold-sales")
 output_errors_path = (Path(data_outputs_errors)/ f"proc_date={proc_date}"/ "anomalies-sales")
 
-with beam.Pipeline(argv=beam_args) as p:
 
-    # Side input: leer tipo de cambio como PCollection de pares (codigo_moneda, factor_usd)
+#***********************************************************
+#**************************Pipeline**************************
+#************************************************************
+
+with beam.Pipeline(argv=beam_args) as p:
     tipo_cambio = (
         p
         | "Leer tipo de cambio" >> beam.io.ReadFromText(

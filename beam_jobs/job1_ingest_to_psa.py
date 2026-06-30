@@ -2,36 +2,28 @@ import csv
 import json
 from datetime import datetime, timezone
 import argparse
-
 import apache_beam as beam
-from apache_beam.io.parquetio import WriteToParquet
+from apache_beam.io.parquetio import WriteToParquet, ReadFromParquet
 import pyarrow as pa
 from pathlib import Path
-
-
-#Data dirs test
-# data_inputs_test = "../data/inputs/"
-# data_santiago_test = "ventas_santiago.csv"
-# data_buenos_aires_test = "ventas_buenos_aires.json"
-# data_lima_test = "ventas_lima.parquet"
-# data_outputs_psa_test = "../data/psa/"
-
-#Data dirs airflow
+# ==========================================
+#Data dirs (con bindmount en local)
+# ==========================================
 data_inputs = "/opt/airflow/data/inputs/"
 data_santiago = "ventas_santiago.csv"
 data_buenos_aires = "ventas_buenos_aires.json"
 data_lima = "ventas_lima.parquet"
 data_outputs_psa = "/opt/airflow/data/psa/"
 
-
-
+# ==========================================
 # ---------- Funciones globales ----------
-
+# ==========================================
 def ingestion_time():
     return datetime.now(timezone.utc).isoformat()
 
+# ==========================================
 # ---------- Santiago (CSV) ----------
-
+# ==========================================
 def parse_csv_santiago(line):
     row = next(csv.reader([line]))
 
@@ -41,7 +33,6 @@ def parse_csv_santiago(line):
         "monto": row[2],
         "fecha": row[3],
     }
-
 
 def santiago_to_output(row):
     return {
@@ -53,9 +44,9 @@ def santiago_to_output(row):
         "ingestado_at": ingestion_time(),
     }
 
-
+# ==========================================
 # ---------- Buenos Aires (JSON) ----------
-
+# ==========================================
 def parse_json_buenos_aires(line):
     row = json.loads(line)
     return {
@@ -64,7 +55,6 @@ def parse_json_buenos_aires(line):
         "total": str(row["total"]),
         "timestamp": row["timestamp"],
     }
-
 
 def buenos_aires_to_output(row):
     return {
@@ -76,9 +66,9 @@ def buenos_aires_to_output(row):
         "ingestado_at": ingestion_time(),
     }
 
-
+# ==========================================
 # ---------- Lima (Parquet) ----------
-
+# ==========================================
 def lima_to_output(row):
     return {
         "id_transaccion": str(row["transaction_id"]),
@@ -89,9 +79,9 @@ def lima_to_output(row):
         "ingestado_at": ingestion_time(),
     }
 
-#*************Pipeline*************
-
-#Se define el schema para guardar parquet
+# ==========================================
+#Schema para guardar parquet
+# ==========================================
 schema_parquet = pa.schema([
     ("id_transaccion", pa.string()),
     ("ciudad", pa.string()),
@@ -101,25 +91,26 @@ schema_parquet = pa.schema([
     ("ingestado_at", pa.string()),
 ])
 
-#Se crea el output path apra guardar en formato historico
-
-#Date para test de script
-# proc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d") 
-
+# ==========================================
 #Date como argumento para que funcione con airflow
+# ==========================================
 parser = argparse.ArgumentParser()
 parser.add_argument("--proc_date", required=True)
 args, beam_args = parser.parse_known_args()
 proc_date = args.proc_date
 
-
+# ==========================================
+#Generacion de output path con fecha dinamica
+# ==========================================
 output_path = (
     Path(data_outputs_psa)
     / f"proc_date={proc_date}"
     / "psa-sales"
 )
 
-# Comienza el pipeline con beam
+#***********************************************************
+#**************************Pipeline**************************
+#************************************************************
 
 with beam.Pipeline(argv=beam_args) as p:
     sales_santiago_csv = (
@@ -136,7 +127,7 @@ with beam.Pipeline(argv=beam_args) as p:
     )
     sales_lima_parquet = (
         p
-        | "Leer PARQUET Lima" >> beam.io.ReadFromParquet(data_inputs + data_lima)
+        | "Leer PARQUET Lima" >> ReadFromParquet(data_inputs + data_lima)
         | "Dar formato de output a PARQUET Lima" >> beam.Map(lima_to_output)
     )
     sales_unificadas = (

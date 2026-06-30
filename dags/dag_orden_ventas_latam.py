@@ -6,7 +6,7 @@ from airflow.models.dag import DAG
 with DAG(
     dag_id="retail_sales_beam_pipeline",
     description="A simple dag for retail multy country data sources",
-    start_date=datetime(2026, 6, 28),
+    start_date=datetime(2026, 6, 30),
     schedule="@daily",
     catchup=False,
     default_args={"retries": 3, "retry_delay": timedelta(minutes=5)},
