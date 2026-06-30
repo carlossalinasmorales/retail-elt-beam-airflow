@@ -1,3 +1,9 @@
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![Apache Beam](https://img.shields.io/badge/apache%20beam-2.57.0-orange.svg)](https://beam.apache.org/)
+[![Apache Airflow](https://img.shields.io/badge/apache%20airflow-3.2.2-teal.svg)](https://airflow.apache.org/)
+[![uv](https://img.shields.io/badge/dependencies-uv-purple.svg)](https://docs.astral.sh/uv/)
+[![Docker Compose](https://img.shields.io/badge/docker%20compose-local%20stack-2496ED.svg)](https://docs.docker.com/compose/)
+
 ## Retail ELT con Apache Beam y Airflow
 
 Este proyecto construye un pipeline ELT distribuido para una empresa de retail con operaciones en Santiago, Lima y Buenos Aires. La solución utiliza **Apache Beam** para el procesamiento de datos y **Apache Airflow** para la orquestación.
@@ -100,6 +106,35 @@ Responsabilidades:
 Parámetro de ejecución:
 - `--proc_date` (obligatorio): fecha de procesamiento usada para leer PSA y escribir Gold/DLQ
 
+### `generate-data/generar_datos_mock.py`
+
+Script auxiliar para crear un conjunto pequeño y determinístico de datos de prueba basados en el caso de estudio de la tarea.
+
+Responsabilidades:
+- crear la carpeta `data/inputs/` si no existe
+- generar el archivo CSV de Santiago
+- generar el archivo Parquet de Lima
+- generar el archivo JSON Lines de Buenos Aires
+- generar el archivo maestro `tipo_cambio.csv`
+
+Uso recomendado:
+- sirve para poblar rápidamente el proyecto con el mismo escenario esperado por la rúbrica
+- es útil para una demostración controlada del pipeline
+
+### `generate-data/generar_datos_random.py`
+
+Script auxiliar para generar datasets aleatorios y parametrizables por sede.
+
+Responsabilidades:
+- pedir por consola la cantidad de registros por sede
+- pedir el porcentaje de errores por sede
+- generar datos válidos e inválidos de forma aleatoria
+- producir archivos de entrada listos para probar validaciones, DLQ y comportamiento del pipeline
+
+Uso recomendado:
+- sirve para probar distintos escenarios de calidad de datos
+- permite estresar el Data Contract con montos negativos, ciudades inválidas y valores corruptos
+
 ## Datos de entrada
 
 Archivos esperados en `data/inputs/`:
@@ -117,21 +152,75 @@ En el estado actual de desarrollo local, las salidas se escriben en:
 - `data/gold/proc_date=YYYY-MM-DD/`
 - `data/errors/proc_date=YYYY-MM-DD/`
 
-## Cómo ejecutar
+## Cómo ejecutar y probar el proyecto
 
-### 1. Instalar dependencias locales con uv
+## Prerrequisitos
+
+Antes de ejecutar el proyecto debes tener instalado:
+
+- **Python 3.12**
+- **uv**
+- **Docker**
+- **Docker Compose**
+
+### Instalar uv
+
+Si no tienes `uv`, puedes instalarlo con:
+
+```bash
+pip install uv
+```
+
+O siguiendo la documentación oficial de uv:
+
+```text
+https://docs.astral.sh/uv/
+```
+
+## Preparación del entorno local
+
+### 1. Crear el entorno virtual
+
+Desde la raíz del proyecto:
+
+```bash
+uv venv
+```
+
+Esto crea un entorno virtual local en `.venv/`.
+
+### 2. Instalar dependencias del proyecto
 
 ```bash
 uv sync
 ```
 
-Dependencias opcionales de desarrollo:
+Si también quieres instalar dependencias opcionales de desarrollo:
 
 ```bash
 uv sync --group dev
 ```
 
-### 2. Construir e iniciar Airflow
+## Paso a paso detallado para probar el proyecto
+
+
+### Prueba con datos aleatorios y errores controlados
+
+1. Ejecutar el generador aleatorio:
+
+```bash
+uv run python generate-data/generar_datos_random.py
+```
+
+2. Ingresar por consola:
+- cantidad de registros para Santiago
+- porcentaje de errores para Santiago
+- cantidad de registros para Lima
+- porcentaje de errores para Lima
+- cantidad de registros para Buenos Aires
+- porcentaje de errores para Buenos Aires
+
+3. Levantar Airflow si aún no está levantado:
 
 ```bash
 docker compose build --no-cache
@@ -139,15 +228,13 @@ docker compose up airflow-init
 docker compose up -d
 ```
 
-### 3. Abrir la interfaz de Airflow
+4. Lanzar el DAG desde Airflow.
 
-```text
-http://localhost:8080
-```
+5. Verificar que:
+- los registros válidos lleguen a Gold
+- los registros corruptos lleguen a Errors
+- la ejecución no falle por filas inválidas aisladas
 
-### 4. Ejecutar el DAG
-
-Activar el DAG `retail_sales_beam_pipeline` y lanzarlo manualmente desde la interfaz.
 
 ## Ejecutar los jobs manualmente
 
@@ -156,13 +243,13 @@ También se pueden ejecutar los jobs Beam manualmente con uv.
 ### Job 1
 
 ```bash
-uv run python beam_jobs/job1_ingest_to_psa.py --proc_date 2026-06-29
+docker compose exec airflow-scheduler python /opt/airflow/beam_jobs/job1_ingest_to_psa.py --proc_date 2026-06-29
 ```
 
 ### Job 2
 
 ```bash
-uv run python beam_jobs/job2_transform_gold.py --proc_date 2026-06-29
+docker compose exec airflow-scheduler python /opt/airflow/beam_jobs/job2_transform_gold.py --proc_date 2026-06-29
 ```
 
 ## Notas sobre Airflow
@@ -187,7 +274,7 @@ Todo uso de IA en este trabajo fue revisado y editado manualmente antes de aplic
 - `Responde el modelo de las 4 preguntas de BEAM (What, When, Where, How) con este contexto`
 - `Has un ejemplo de ingesta de datos utilizando schemas y comparalo con pandas`
 - `Como puedo visualizar santiago_to_output(df_santiago) en formato tabla de una df de pandas`
-- `Cual es la mejor manerad e unificar multiples fuentes de datos con beam`
+- `Cual es la mejor manera de unificar multiples fuentes de datos con beam`
 - `Muestrame como guardar lo que crea un pipeline en beam con este formato: carpeta historica (PSA) añadiendo la fecha de procesamiento (proc date=YYYY-MM-DD).`
 - `Escribe el docker compose para levantar airflow`
 - `Dame la manera mas simple de pasarle argumentos para que el date de airflow funcione con beam con el codigo actual`
